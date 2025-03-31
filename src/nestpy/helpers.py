@@ -105,7 +105,7 @@ def GetYieldsVectorized(interaction, yield_type, nc=None, detector=None, **kwarg
     if nc is None:
         # Cache the default in _NestCalcInit
         if 'default' not in _NestCalcInit:
-            _NestCalcInit['default'] = NESTcalc(DetectorExample_XENON10() if not detector else detector)
+            _NestCalcInit['default'] = NESTcalc(DetectorExample_XENON10())
         nc = _NestCalcInit['default']
     if type(interaction) == str:
         interaction_object = GetInteractionObject(interaction)
