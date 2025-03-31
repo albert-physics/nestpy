@@ -14,29 +14,36 @@ Main ingredients for the above steps:
 
 import numpy as np
 
-from nestpy import DetectorExample_XENON10, NESTcalc, INTERACTION_TYPE # This is C++ library
+
+from nestpy import (
+    DetectorExample_XENON10,
+    NESTcalc,
+    INTERACTION_TYPE,
+)  # This is C++ library
+
+from nestpy import array
 
 # Detector identification for default
 # Performing NEST calculations according to the given detector example.
 # Yields are ambivalent to detector.
-#DETECTOR = DetectorExample_XENON10()
-#NC = NESTcalc(DETECTOR)
+# DETECTOR = DetectorExample_XENON10()
+# NC = NESTcalc(DETECTOR)
 
 NEST_INTERACTION_NUMBER = dict(
-        nr=0,
-        wimp=1,
-        b8=2,
-        dd=3,
-        ambe=4,
-        cf=5,
-        ion=6,
-        gammaray=7,
-        beta=8,
-        ch3t=9,
-        c14=10,
-        kr83m=11,
-        nonetype=12,
-    )
+    nr=0,
+    wimp=1,
+    b8=2,
+    dd=3,
+    ambe=4,
+    cf=5,
+    ion=6,
+    gammaray=7,
+    beta=8,
+    ch3t=9,
+    c14=10,
+    kr83m=11,
+    nonetype=12,
+)
 
 
 # Add local variable to cache the NESTcalc(DETECTOR) object
@@ -45,6 +52,7 @@ _NestCalcInit = dict()
 
 def ListInteractionTypes():
     return NEST_INTERACTION_NUMBER.keys()
+
 
 def GetInteractionObject(name):
     '''
@@ -65,8 +73,9 @@ def GetInteractionObject(name):
     interaction_object = INTERACTION_TYPE(NEST_INTERACTION_NUMBER[name])
     return interaction_object
 
-@np.vectorize
-def GetYieldsVectorized(interaction, yield_type, nc=None, **kwargs):
+
+@np.vectorize(excluded={"nuisance_parameters", "ERYieldsParam"})
+def GetYieldsVectorized(interaction, yield_type, nc=None, detector=None, **kwargs):
     '''
     This function calculates nc.GetYields for the various interactions and arguments we pass into it.
 
@@ -96,14 +105,14 @@ def GetYieldsVectorized(interaction, yield_type, nc=None, **kwargs):
     if nc is None:
         # Cache the default in _NestCalcInit
         if 'default' not in _NestCalcInit:
-            _NestCalcInit['default'] = NESTcalc(DetectorExample_XENON10())
+            _NestCalcInit['default'] = NESTcalc(DetectorExample_XENON10() if not detector else detector)
         nc = _NestCalcInit['default']
     if type(interaction) == str:
         interaction_object = GetInteractionObject(interaction)
     else:
         interaction_object = interaction
 
-    yield_object = nc.GetYields(interaction = interaction_object, **kwargs)
+    yield_object = nc.GetYields(interaction=interaction_object, **kwargs)
     # returns the yields for the type of yield we are considering
     return getattr(yield_object, yield_type)
 
@@ -122,7 +131,8 @@ def PhotonYield(**kwargs):
         GetYieldsVectorized(yield_object, yield_type='PhotonYield') (array): array of yield values same dimensions as energies
 
     '''
-    return GetYieldsVectorized(yield_type='PhotonYield', **kwargs)
+    return GetYieldsVectorized(yield_type="PhotonYield", **kwargs)
+
 
 def ElectronYield(**kwargs):
     '''
@@ -139,7 +149,8 @@ def ElectronYield(**kwargs):
         GetYieldsVectorized(yield_object, yield_type='ElectronYield') (array): array of yield values same dimensions as energies
 
     '''
-    return GetYieldsVectorized(yield_type='ElectronYield', **kwargs)
+    return GetYieldsVectorized(yield_type="ElectronYield", **kwargs)
+
 
 def Yield(**kwargs):
     '''
@@ -152,7 +163,56 @@ def Yield(**kwargs):
     Returns:
         (dict): dict with photon and electron yields arranged together by keys.
     '''
-    return {'photon': PhotonYield(**kwargs),
-            'electron': ElectronYield(**kwargs),
-           # What is missing?  Aren't there other parts of YieldObject?
-           }
+    return {
+        'photon': PhotonYield(**kwargs),
+        'electron': ElectronYield(**kwargs),
+        # What is missing?  Aren't there other parts of YieldObject?
+    }
+
+
+def get_random_position(detector, number: int):
+    # Make generator
+    rng = np.random.default_rng()
+
+    # Get random positions
+    r = rng.uniform(0, detector.get_radius(), size=number)
+    θ = rng.uniform(0, 2 * np.pi, size=number)
+    x = r * np.cos(θ)
+    y = r * np.sin(θ)
+    z = rng.uniform(0, detector.get_TopDrift(), size=number)
+
+    # Return 3 X N array of positions
+    return np.vstack((x, y, z)).T
+
+
+def runNESTframe(
+    interaction, detector, energy, pos: list[list[float]] = None, **kwargs
+):
+
+    try:
+        import pandas as pd
+    except ImportError:
+        msg = "The runNESTframe method requires the 'pandas' package.  Please install via 'pip install pandas'"
+        raise ImportError(msg)
+
+    interaction = GetInteractionObject(interaction)
+
+    # If no position given then randomly sample
+    if not pos:
+        pos = get_random_position(detector, energy.shape)
+
+    # Compute the NEST outputs
+    result = array.runNESTvec(detector, interaction, energy.tolist(), pos.tolist(), **kwargs)
+
+    # Create the pandas dataframe
+    df = pd.DataFrame(
+        {i: getattr(result, i) for i in result.__dir__() if not i.startswith("_")}
+    )
+
+    # Save truth information
+    df["energy_keV"] = energy
+    df["x_mm"] = pos[:, 0]
+    df["y_mm"] = pos[:, 1]
+    df["z_mm"] = pos[:, 2]
+
+    return df

@@ -3,12 +3,15 @@ cmake_minimum_required(VERSION 2.8.12...3.30)
 project(nestpy)
 
 # Set source directory
-set(SOURCE_DIR "lib/nest/src")
+set(NEST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/nest/src")
+set(NESTPY_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/nestpy")
+
 # Tell CMake that headers are also in SOURCE_DIR
 include_directories(
     "lib/nest/include/NEST/" 
     "lib/nest/include/Detectors"
     "lib/gcem/include"
+    "include"
 )
 
 ###############        Get NEST version from git        #####################
@@ -35,11 +38,14 @@ endfunction()
 get_versions("${NEST_VERSION}" version)
 set(NEST_VERSION ${version})
 
-set(SOURCES "${SOURCE_DIR}/NEST.cpp" "${SOURCE_DIR}/LArNEST.cpp" "${SOURCE_DIR}/RandomGen.cpp"  "${SOURCE_DIR}/VDetector.cpp" "${SOURCE_DIR}/execNEST.cpp" "${SOURCE_DIR}/TestSpectra.cpp" "${SOURCE_DIR}/GammaHandler.cpp" "${SOURCE_DIR}/ValidityTests.cpp")
+set(NEST_SOURCES "${NEST_SOURCE_DIR}/NEST.cpp" "${NEST_SOURCE_DIR}/LArNEST.cpp" "${NEST_SOURCE_DIR}/RandomGen.cpp"  "${NEST_SOURCE_DIR}/VDetector.cpp" "${NEST_SOURCE_DIR}/execNEST.cpp" "${NEST_SOURCE_DIR}/TestSpectra.cpp" "${NEST_SOURCE_DIR}/GammaHandler.cpp" "${NEST_SOURCE_DIR}/ValidityTests.cpp")
+set(NESTPY_SOURCES "${NESTPY_SOURCE_DIR}/bindings.cpp" "${NESTPY_SOURCE_DIR}/spectra.cpp" "${NESTPY_SOURCE_DIR}/detector.cpp" "${NESTPY_SOURCE_DIR}/array.cpp")
+
+
 
 # Generate Python module
 add_subdirectory(lib/pybind11)
-pybind11_add_module(nestpy ${SOURCES} "src/nestpy/bindings.cpp")
+pybind11_add_module(nestpy ${NEST_SOURCES} ${NESTPY_SOURCES})
 
 target_compile_definitions(nestpy
                            PRIVATE NESTPY_VERSION=${NESTPY_VERSION_INFO} NEST_VERSION=${NEST_VERSION})

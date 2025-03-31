@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <iostream>
 #include "NEST.hh"
 #include "LArNEST.hh"
 #include "VDetector.hh"
@@ -11,11 +12,16 @@
 #include <pybind11/stl_bind.h>
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
+#include "execNEST.hh"
+#include "spectra.hh"
+#include "detector.hh"
+#include "array.hh"
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
  
 namespace py = pybind11;
+using namespace pybind11::literals; 
 
 PYBIND11_MODULE(nestpy, m) 
 {
@@ -43,7 +49,7 @@ PYBIND11_MODULE(nestpy, m)
 		.def("unlock_seed", &RandomGen::UnlockSeed);
 
 	// Binding for YieldResult struct
-	
+
 	py::class_<NEST::YieldResult>(m, "YieldResult", py::dynamic_attr())
 		.def(py::init<>())
 		.def_readwrite("PhotonYield", &NEST::YieldResult::PhotonYield)
@@ -115,6 +121,9 @@ PYBIND11_MODULE(nestpy, m)
 		.def(py::init<>())
 		.def("Initialization", &VDetector::Initialization)
 		.def("get_g1", &VDetector::get_g1)
+		.def("get_g2",[](VDetector *self){return NEST::NESTcalc(self).CalculateG2(0).at(3);})
+		// .def_readonly("g1", [](VDetector &self){return self.get_g1();})
+		// .def_readonly("g2", [](VDetector *self){return NEST::NESTcalc(self).CalculateG2(0).at(3);})
 		.def("get_sPEres", &VDetector::get_sPEres)
 		.def("get_sPEthr", &VDetector::get_sPEthr)
 		.def("get_sPEeff", &VDetector::get_sPEeff)
@@ -338,7 +347,9 @@ PYBIND11_MODULE(nestpy, m)
 		.def("GetSpike", &NEST::NESTcalc::GetSpike)
 		// Currently VDetector.FitTBA() requires we reinitialize the detector every time:
 		.def("GetS2", &NEST::NESTcalc::GetS2)
-		.def("CalculateG2", &NEST::NESTcalc::CalculateG2)
+		.def("CalculateG2", &NEST::NESTcalc::CalculateG2, py::arg("vebosity") = 0)
+		.def("GetG2",  [](NEST::NESTcalc &self){return self.CalculateG2(0).at(3);})
+		.def("GetG2Params", [](NEST::NESTcalc &self){auto vec = self.CalculateG2(0); return py::dict("g2"_a=vec.at(3), "extraction_eff"_a=vec.at(1));})
 		.def("SetDriftVelocity", &NEST::NESTcalc::SetDriftVelocity)
 		.def("SetDriftVelocity_NonUniform", &NEST::NESTcalc::SetDriftVelocity_NonUniform)
 		.def("SetDensity", &NEST::NESTcalc::SetDensity)
@@ -600,6 +611,13 @@ PYBIND11_MODULE(nestpy, m)
 		.def("legacy_calculation", &NEST::LArNEST::LegacyCalculation)
 		.def("legacy_get_recombination_probability", &NEST::LArNEST::LegacyGetRecombinationProbability)
 		.def("legacy_get_let", &NEST::LArNEST::LegacyGetLinearEnergyTransfer);
-	  
 
+	// Initialise new spectra class
+	init_spectra(m);
+
+	// Initilase new array functions
+	init_array(m);
+
+	// Initialise new detector class
+	init_detector(m);
 }
