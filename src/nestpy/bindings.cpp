@@ -303,7 +303,18 @@ PYBIND11_MODULE(nestpy, m)
 		.def_readonly_static("default_ERYieldsParam", &default_ERYieldsParam)
 		//     .def_static("BinomFluct", &NEST::NESTcalc::BinomFluct)
 		.def("FullCalculation", &NEST::NESTcalc::FullCalculation,
-				"Perform the full yield calculation with smearings")
+			"Perform the full yield calculation with smearings",
+			py::arg("interaction") = NEST::INTERACTION_TYPE::NR,
+			py::arg("energy"),
+		   	py::arg("density") = 2.9,
+			py::arg("drift_field") = 124,
+			py::arg("A") = 131.293,
+			py::arg("Z") = 54,
+			py::arg("nuisance_parameters") = &default_NRYieldsParam,
+			py::arg("free_parameters") = &default_NRERWidthsParam,
+			py::arg("er_parameters") = &default_ERYieldsParam,
+			py::arg("do_times") = false
+	   )
 		.def("PhotonTime", &NEST::NESTcalc::PhotonTime)
 		.def("AddPhotonTransportTime", &NEST::NESTcalc::AddPhotonTransportTime)
 		.def("GetPhotonTimes", &NEST::NESTcalc::GetPhotonTimes)
