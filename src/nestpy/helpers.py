@@ -175,7 +175,7 @@ def get_random_position(detector, number: int):
     rng = np.random.default_rng()
 
     # Get random positions
-    r = rng.uniform(0, detector.get_radius(), size=number)
+    r = detector.get_radius() * np.sqrt(rng.uniform(0, 1, size=number))
     θ = rng.uniform(0, 2 * np.pi, size=number)
     x = r * np.cos(θ)
     y = r * np.sin(θ)
