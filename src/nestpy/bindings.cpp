@@ -314,7 +314,7 @@ PYBIND11_MODULE(nestpy, m)
 			py::arg("free_parameters") = &default_NRERWidthsParam,
 			py::arg("er_parameters") = &default_ERYieldsParam,
 			py::arg("do_times") = false
-	   )
+	    )
 		.def("PhotonTime", &NEST::NESTcalc::PhotonTime)
 		.def("AddPhotonTransportTime", &NEST::NESTcalc::AddPhotonTransportTime)
 		.def("GetPhotonTimes", &NEST::NESTcalc::GetPhotonTimes)

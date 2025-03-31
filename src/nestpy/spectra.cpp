@@ -19,7 +19,7 @@
 
 namespace py = pybind11;
 
-// Function to vectorize spectra sampling (emin, emax)
+// Function to vectorise spectra sampling (emin, emax)
 py::array_t<double> fill_spectra(
 	double emin, 
 	double emax,
@@ -31,7 +31,8 @@ py::array_t<double> fill_spectra(
 	return py::array(py::cast(vec));
 }
 
-py::array_t<double> fill_ws_spectra(
+// Function to vectorise WIMP sampling
+py::array_t<double> fill_spectra(
 	double mass, 
 	double eStep,
 	double day,
@@ -43,7 +44,7 @@ py::array_t<double> fill_ws_spectra(
 	return py::array(py::cast(vec));
 }
 
-// Function to vectorize spectra sampling (DD)
+// Function to vectorise spectra sampling (DD)
 py::array_t<double>fill_spectra(
 	double emin,
 	double emax,
@@ -65,7 +66,6 @@ py::array_t<double>fill_spectra(
 
 void init_spectra(py::module& m){
 	// Binding for the TestSpectra class
-	// auto m_spectra = m.def_submodule("detectors", "detectors");
 	py::class_<TestSpectra, std::unique_ptr<TestSpectra, py::nodelete>>(m, "spectra", py::module_local())
 		.def(py::init<>())
 		.def_static(
@@ -100,7 +100,9 @@ void init_spectra(py::module& m){
 			py::arg("number")
 		)
 		.def_static("DD",
-			[](double emin, double emax, double expFall, double peakFrac, double peakMu, double peakSig, int number){return fill_spectra(emin, emax, expFall, peakFrac, peakMu, peakSig, number, &TestSpectra::DD_spectrum);},  
+			[](double emin, double emax, double expFall, double peakFrac, double peakMu, double peakSig, int number){
+				return fill_spectra(emin, emax, expFall, peakFrac, peakMu, peakSig, number, &TestSpectra::DD_spectrum);
+			},  
 			py::arg("xMin") = 0.,
 			py::arg("xMax") = 80.,
 			py::arg("expFall") =  10.,
@@ -128,7 +130,7 @@ void init_spectra(py::module& m){
 			py::arg("day")=0.
 		)
 		.def_static("WIMP",
-			[](double mass, int number, double eStep, double day){return fill_ws_spectra(mass, eStep, day, number);},  
+			[](double mass, int number, double eStep, double day){return fill_spectra(mass, eStep, day, number);},  
 			py::arg("mass"),
 			py::arg("number"),
 			py::arg("eStep") = 5.,
