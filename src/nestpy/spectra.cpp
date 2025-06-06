@@ -52,14 +52,16 @@ py::array_t<double>fill_spectra(
 	double peakFrac,
 	double peakMu,
 	double peakSig,
+	double peakSkew,
 	int number,
-	std::function<double(double, double, double, double, double, double)> spectra
+	std::function<double(double, double, double, double, double, double, double)> spectra
 ){
 	auto vec = std::vector<double>(number);
 	std::transform(vec.begin(), vec.end(), vec.begin(), [&](double _){return spectra(emin, emax, expFall,
 		peakFrac,
 		peakMu,
-		peakSig
+		peakSig,
+		peakSkew
 	);});
 	return py::array(py::cast(vec));
 }
@@ -100,15 +102,16 @@ void init_spectra(py::module& m){
 			py::arg("number")
 		)
 		.def_static("DD",
-			[](double emin, double emax, double expFall, double peakFrac, double peakMu, double peakSig, int number){
-				return fill_spectra(emin, emax, expFall, peakFrac, peakMu, peakSig, number, &TestSpectra::DD_spectrum);
+			[](double emin, double emax, double expFall, double peakFrac, double peakMu, double peakSig, double peakSkew, int number){
+				return fill_spectra(emin, emax, expFall, peakFrac, peakMu, peakSig, peakSkew, number, &TestSpectra::DD_spectrum);
 			},  
 			py::arg("xMin") = 0.,
 			py::arg("xMax") = 80.,
-			py::arg("expFall") =  10.,
-			py::arg("peakFrac") = 0.1,
-			py::arg("peakMu") = 60.,
-			py::arg("peakSig") = 25.,
+			py::arg("expFall") =  13.,
+			py::arg("peakFrac") = 0.12,
+			py::arg("peakMu") = 71.2,
+			py::arg("peakSig") = 20.,
+			py::arg("peakSkew") = -20.5,
             py::arg("number")
 		)
 		.def_static("ppSolar", 

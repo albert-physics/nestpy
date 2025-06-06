@@ -266,10 +266,11 @@ PYBIND11_MODULE(nestpy, m)
 			&TestSpectra::DD_spectrum,
 			py::arg("xMin") = 0.,
 			py::arg("xMax") = 80.,
-			py::arg("expFall") =  10.,
-			py::arg("peakFrac") = 0.1,
-			py::arg("peakMu") = 60.,
-			py::arg("peakSig") = 25.
+			py::arg("expFall") =  13.,
+			py::arg("peakFrac") = 0.12,
+			py::arg("peakMu") = 71.2,
+			py::arg("peakSig") = 20.,
+			py::arg("peakSkew") = -20.5
 		)
 		.def_static("ppSolar_spectrum", 
 			&TestSpectra::ppSolar_spectrum,
@@ -344,14 +345,12 @@ PYBIND11_MODULE(nestpy, m)
 			py::arg("A") = 131.293,
 			py::arg("Z") = 54,
 			py::arg("nuisance_parameters") = std::vector<double>({ 11., 1.1, 0.0480, -0.0533, 12.6, 0.3, 2., 0.3, 2., 0.5, 1., 1.}), 
-			py::arg("ERYieldsParam") = std::vector<double>({-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.}),
-			py::arg("oldModelER") = false
+			py::arg("ERYieldsParam") = std::vector<double>({-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.,-1.})
 		)
 		.def("GetQuanta", &NEST::NESTcalc::GetQuanta,
 			py::arg("yields"),
 			py::arg("density") = 2.9,
 			py::arg("free_parameters") = std::vector<double>({0.4,0.4,0.04,0.5,0.19,2.25,1.,0.046452,0.205,0.45,-0.2}), 
-				py::arg("oldModelER") = false,
 			py::arg("SkewnessER") = -999.
 		)   
 		.def("GetS1", &NEST::NESTcalc::GetS1)

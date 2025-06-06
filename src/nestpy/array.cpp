@@ -36,6 +36,11 @@ void init_array(py::module& m){
         py::arg("energies"),
         py::arg("positions"),
         py::arg("inField") = -1.0,
-        py::arg("seed") = 0
+        py::arg("seed") = 0,
+        py::arg("er_yield_params") = default_ERYieldsParam,
+        py::arg("nr_yield_params") = default_NRYieldsParam,
+        py::arg("width_params") = default_NRERWidthsParam,
+        py::arg("s1_mode") = NEST::S1CalculationMode::Full,
+        py::arg("s2_mode") = NEST::S2CalculationMode::Full
     );
 }
