@@ -117,10 +117,10 @@ class NESTcalcTest(unittest.TestCase):
         assert self.nestcalc.CalculateG2(True)[3] > 10
 
     def test_nestcalc_set_drift_velocity(self):
-        self.nestcalc.SetDriftVelocity(190, 10, 10)
+        self.nestcalc.SetDriftVelocity(190, 10, 10, 1.8)
 
     def test_nestcalc_set_drift_velocity_non_uniform(self):
-        self.nestcalc.SetDriftVelocity_NonUniform(190, 10, 10, 10)
+        self.nestcalc.SetDriftVelocity_NonUniform(2.9, 1, 170, 1.8, 0., 0.)
 
     def test_nestcalc_set_denisty(self):
         self.nestcalc.SetDensity(190, 10)
@@ -138,7 +138,7 @@ class NESTcalcTest(unittest.TestCase):
 
     def test_equality(self):
         # Will call a test for the nearlyEqual function to ensure it still works.
-        self.nestcalc.GetYields(nestpy.INTERACTION_TYPE(0), 100., 2.9, 100., 0., 54, nestpy.default_nr_yields_params(), nestpy.default_er_yields_params(), False)
+        self.nestcalc.GetYields(nestpy.INTERACTION_TYPE(0), 100., 2.9, 100., 0., 54, nestpy.default_nr_yields_params(), nestpy.default_er_yields_params())
 
 
 class TestSpectraWIMPTest(unittest.TestCase):
