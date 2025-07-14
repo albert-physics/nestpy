@@ -37,7 +37,7 @@ PYBIND11_MODULE(nestpy, m)
 	RandomGen::rndm()->SetSeed( time(nullptr) );
 	// Binding for RandomGen class
 	py::class_<RandomGen>(m, "RandomGen")
-		.def("rndm", &RandomGen::rndm)
+		.def_static("rndm", &RandomGen::rndm, py::return_value_policy::reference)
 		.def("set_seed", &RandomGen::SetSeed)
 		.def("lock_seed", &RandomGen::LockSeed)
 		.def("unlock_seed", &RandomGen::UnlockSeed);
