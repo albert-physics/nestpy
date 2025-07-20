@@ -26,6 +26,8 @@ jobs:
             os: "macos-latest"
           - python-version: 3.7
             os: "macos-latest"
+          - python-version: 3.7
+            os: "ubuntu-latest"
     steps:
       - name: Setup python
         uses: actions/setup-python@v2.3.1

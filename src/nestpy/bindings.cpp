@@ -43,7 +43,7 @@ PYBIND11_MODULE(nestpy, m)
 	RandomGen::rndm()->SetSeed( time(nullptr) );
 	// Binding for RandomGen class
 	py::class_<RandomGen>(m, "RandomGen")
-		.def("rndm", &RandomGen::rndm)
+		.def_static("rndm", &RandomGen::rndm, py::return_value_policy::reference)
 		.def("set_seed", &RandomGen::SetSeed)
 		.def("lock_seed", &RandomGen::LockSeed)
 		.def("unlock_seed", &RandomGen::UnlockSeed);
@@ -266,11 +266,11 @@ PYBIND11_MODULE(nestpy, m)
 			&TestSpectra::DD_spectrum,
 			py::arg("xMin") = 0.,
 			py::arg("xMax") = 80.,
-			py::arg("expFall") =  13.,
-			py::arg("peakFrac") = 0.12,
-			py::arg("peakMu") = 71.2,
-			py::arg("peakSig") = 20.,
-			py::arg("peakSkew") = -20.5
+			py::arg("expFall") =  10.,
+			py::arg("peakFrac") = 0.1,
+			py::arg("peakMu") = 60.,
+			py::arg("peakSig") = 25.,
+			py::arg("peakSkew") = 0.
 		)
 		.def_static("ppSolar_spectrum", 
 			&TestSpectra::ppSolar_spectrum,
