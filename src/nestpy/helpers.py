@@ -198,7 +198,7 @@ def runNESTframe(
     interaction = GetInteractionObject(interaction)
 
     # If no position given then randomly sample
-    if not pos:
+    if pos is not None:
         pos = get_random_position(detector, energy.shape)
 
     # Compute the NEST outputs
