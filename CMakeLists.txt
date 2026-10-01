@@ -38,7 +38,7 @@ endfunction()
 get_versions("${NEST_VERSION}" version)
 set(NEST_VERSION ${version})
 
-set(NEST_SOURCES "${NEST_SOURCE_DIR}/NEST.cpp" "${NEST_SOURCE_DIR}/LArNEST.cpp" "${NEST_SOURCE_DIR}/RandomGen.cpp"  "${NEST_SOURCE_DIR}/VDetector.cpp" "${NEST_SOURCE_DIR}/execNEST.cpp" "${NEST_SOURCE_DIR}/TestSpectra.cpp" "${NEST_SOURCE_DIR}/GammaHandler.cpp" "${NEST_SOURCE_DIR}/ValidityTests.cpp")
+set(NEST_SOURCES "${NEST_SOURCE_DIR}/NEST.cpp" "${NEST_SOURCE_DIR}/NESTObservableArray.cpp" "${NEST_SOURCE_DIR}/LArNEST.cpp" "${NEST_SOURCE_DIR}/RandomGen.cpp"  "${NEST_SOURCE_DIR}/VDetector.cpp" "${NEST_SOURCE_DIR}/execNEST.cpp" "${NEST_SOURCE_DIR}/TestSpectra.cpp" "${NEST_SOURCE_DIR}/GammaHandler.cpp" "${NEST_SOURCE_DIR}/ValidityTests.cpp")
 set(NESTPY_SOURCES "${NESTPY_SOURCE_DIR}/bindings.cpp" "${NESTPY_SOURCE_DIR}/spectra.cpp" "${NESTPY_SOURCE_DIR}/detector.cpp" "${NESTPY_SOURCE_DIR}/array.cpp")
 
 
@@ -48,5 +48,9 @@ pybind11_add_module(_nestpy ${NEST_SOURCES} ${NESTPY_SOURCES})
 
 target_compile_definitions(_nestpy
                            PRIVATE NESTPY_VERSION=${NESTPY_VERSION_INFO} NEST_VERSION=${NEST_VERSION})
+
+# runNESTvec_parallel uses std::thread
+find_package(Threads REQUIRED)
+target_link_libraries(_nestpy PRIVATE Threads::Threads)
 
 install(TARGETS _nestpy DESTINATION nestpy)

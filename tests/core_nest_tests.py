@@ -275,5 +275,57 @@ class RunNESTvecNumpyTest(unittest.TestCase):
         self.assertEqual(run[result.fields].to_list(), result.to_list())
         self.assertEqual(run["energy_keV"].to_list(), self.energies.tolist())
 
+class RunNESTvecParallelTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.detector = nestpy.detectors.DetectorExample_XENON10()
+        cls.it = nestpy.interactions.NR
+        n = 2500
+        cls.energies = np.linspace(1., 50., n)
+        cls.positions = np.column_stack((np.zeros(n), np.zeros(n), np.linspace(10., 110., n)))
+
+    def simulate(self, energies=None, positions=None, **kwargs):
+        kwargs.setdefault("seed", 5)
+        kwargs.setdefault("chunk_size", 100)
+        return nestpy.array.runNESTvec_parallel(
+            self.detector, self.it,
+            self.energies if energies is None else energies,
+            self.positions if positions is None else positions,
+            **kwargs).to_list()
+
+    def test_independent_of_thread_count(self):
+        reference = self.simulate(n_threads=1)
+        for n_threads in [2, 4, 0]:
+            self.assertEqual(self.simulate(n_threads=n_threads), reference)
+
+    def test_order_and_length(self):
+        full = self.simulate(n_threads=4)
+        first_chunk = self.simulate(self.energies[:100], self.positions[:100], n_threads=4)
+        self.assertEqual(len(full), len(self.energies))
+        self.assertEqual(full[:100], first_chunk)
+
+    def test_numpy_input_matches_lists(self):
+        self.assertEqual(self.simulate(self.energies.tolist(), self.positions.tolist(), n_threads=2),
+                         self.simulate(n_threads=2))
+
+    def test_invalid_arguments(self):
+        with self.assertRaises(ValueError):
+            self.simulate(positions=self.positions[:-1])
+        with self.assertRaises(ValueError):
+            self.simulate(chunk_size=0)
+        self.assertEqual(self.simulate([], []), [])
+
+    def test_seed_is_uint64(self):
+        for run in [nestpy.array.runNESTvec, nestpy.array.runNESTvec_parallel]:
+            run(self.detector, self.it, self.energies[:10], self.positions[:10], seed=2**64 - 1)
+            with self.assertRaises(TypeError):
+                run(self.detector, self.it, self.energies[:10], self.positions[:10], seed=-1)
+
+    def test_run_nest_threads(self):
+        arr = nestpy.helpers.run_nest(self.it, self.detector, self.energies, self.positions,
+                                      n_threads=2, seed=5, chunk_size=100)
+        expected = self.simulate(n_threads=1)
+        self.assertEqual(arr[list(expected[0])].to_list(), expected)
+
 if __name__ == "__main__":
     unittest.main()

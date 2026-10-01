@@ -169,8 +169,15 @@ def run_nest(
     detector,
     energy,
     positions: list[list[float]] = None,
+    n_threads: int = None,
     **kwargs
 ):
+    """Run NEST for each energy/position.
+
+    If n_threads is given, events are simulated on that many threads (0 uses
+    all cores). Threaded results depend on the seed and chunk_size kwargs but
+    not on n_threads, and differ from the single-threaded result for the same seed.
+    """
 
     energy = np.asarray(energy)
 
@@ -180,7 +187,12 @@ def run_nest(
     positions = np.asarray(positions)
 
     # Compute the NEST outputs (an awkward array, one record per event)
-    arr = array.runNESTvec(detector, interaction, energy, positions, **kwargs)
+    if n_threads is None:
+        arr = array.runNESTvec(detector, interaction, energy, positions, **kwargs)
+    else:
+        arr = array.runNESTvec_parallel(
+            detector, interaction, energy, positions, n_threads=n_threads, **kwargs
+        )
 
     # Save truth information
     arr["energy_keV"] = energy
@@ -195,10 +207,11 @@ def run_nest_df(
     detector,
     energy,
     pos: list[list[float]] = None,
+    n_threads: int = None,
     **kwargs
 ):
 
-    arr = run_nest(interaction, detector, energy, pos, **kwargs)
+    arr = run_nest(interaction, detector, energy, pos, n_threads=n_threads, **kwargs)
     df = pd.DataFrame({i: arr[i] for i in arr.fields if arr[i].ndim == 1})
 
     return df
