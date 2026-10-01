@@ -2,6 +2,8 @@ import unittest
 import nestpy
 import platform
 
+import numpy as np
+
 class ConstructorTest(unittest.TestCase):
     """Test constructors
 
@@ -222,6 +224,55 @@ class LArNESTTest(unittest.TestCase):
     
     def test_larnest_get_yields(self):
         self.larnest.get_yields(self.it, 100., 1., 500., 1.393)
+
+class RunNESTvecParallelTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.detector = nestpy.detectors.DetectorExample_XENON10()
+        cls.it = nestpy.interactions.NR
+        n = 2500
+        cls.energies = [1. + 49. * i / n for i in range(n)]
+        cls.positions = [[0., 0., 10. + 100. * i / n] for i in range(n)]
+        cls.fields = [k for k in dir(nestpy.array.NESTObservableArray) if not k.startswith("_")]
+
+    def run_parallel(self, energies=None, positions=None, **kwargs):
+        result = nestpy.array.runNESTvec_parallel(
+            self.detector, self.it,
+            self.energies if energies is None else energies,
+            self.positions if positions is None else positions,
+            seed=5, chunk_size=100, **kwargs)
+        return {k: getattr(result, k) for k in self.fields}
+
+    def test_independent_of_thread_count(self):
+        reference = self.run_parallel(n_threads=1)
+        for n_threads in [2, 4, 0]:
+            self.assertEqual(self.run_parallel(n_threads=n_threads), reference)
+
+    def test_order_and_length(self):
+        full = self.run_parallel(n_threads=4)
+        first_chunk = self.run_parallel(self.energies[:100], self.positions[:100], n_threads=4)
+        for k in self.fields:
+            self.assertEqual(len(full[k]), len(self.energies))
+            self.assertEqual(full[k][:100], first_chunk[k])
+
+    def test_invalid_arguments(self):
+        with self.assertRaises(ValueError):
+            self.run_parallel(positions=self.positions[:-1])
+        with self.assertRaises(ValueError):
+            nestpy.array.runNESTvec_parallel(
+                self.detector, self.it, self.energies, self.positions, chunk_size=0)
+
+    def test_seed_is_uint64(self):
+        for run in [nestpy.array.runNESTvec, nestpy.array.runNESTvec_parallel]:
+            run(self.detector, self.it, self.energies[:10], self.positions[:10], seed=2**64 - 1)
+            with self.assertRaises(TypeError):
+                run(self.detector, self.it, self.energies[:10], self.positions[:10], seed=-1)
+
+    def test_run_nest_threads(self):
+        arr = nestpy.helpers.run_nest(
+            self.it, self.detector, self.energies, np.array(self.positions),
+            n_threads=2, seed=5, chunk_size=100)
+        self.assertEqual(arr["s1c_phd"].to_list(), self.run_parallel(n_threads=1)["s1c_phd"])
 
 if __name__ == "__main__":
     unittest.main()

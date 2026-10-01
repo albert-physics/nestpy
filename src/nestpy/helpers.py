@@ -169,19 +169,33 @@ def run_nest(
     detector,
     energy,
     positions: list[list[float]] = None,
+    n_threads: int = None,
     **kwargs
 ):
+    """Run NEST for each energy/position.
+
+    If n_threads is given, events are simulated on that many threads (0 uses
+    all cores). Threaded results depend on the seed and chunk_size kwargs but
+    not on n_threads, and differ from the single-threaded result for the same seed.
+    """
 
     energy = np.asarray(energy)
 
     # If no position given then randomly sample
     if positions is None:
         positions = get_random_position(detector, len(energy))
+    positions = np.asarray(positions)
 
     # Compute the NEST outputs
-    result = array.runNESTvec(
-        detector, interaction, energy.tolist(), positions.tolist(), **kwargs
-    )
+    if n_threads is None:
+        result = array.runNESTvec(
+            detector, interaction, energy.tolist(), positions.tolist(), **kwargs
+        )
+    else:
+        result = array.runNESTvec_parallel(
+            detector, interaction, energy.tolist(), positions.tolist(),
+            n_threads=n_threads, **kwargs
+        )
 
     # Create the pandas dataframe
     arr = ak.Array(
@@ -201,10 +215,11 @@ def run_nest_df(
     detector,
     energy,
     pos: list[list[float]] = None,
+    n_threads: int = None,
     **kwargs
 ):
 
-    arr = run_nest(interaction, detector, energy, pos, **kwargs)
+    arr = run_nest(interaction, detector, energy, pos, n_threads=n_threads, **kwargs)
     df = pd.DataFrame({i: arr[i] for i in arr.fields if arr[i].ndim == 1})
 
     return df
